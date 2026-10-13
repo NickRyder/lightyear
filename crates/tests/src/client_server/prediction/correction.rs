@@ -345,14 +345,14 @@ fn post_rollback_correction_smooths_velocities() {
     assert_ne!(
         world
             .get::<VisualCorrection<LinearVelocity>>(entity)
-            .map(|correction| correction.error.clone()),
+            .map(|correction| correction.error),
         Some(LinearVelocity::default()),
         "a correction is carrying the difference"
     );
     assert_ne!(
         world
             .get::<VisualCorrection<AngularVelocity>>(entity)
-            .map(|correction| correction.error.clone()),
+            .map(|correction| correction.error),
         Some(AngularVelocity(0.0)),
         "a correction is carrying the difference"
     );
