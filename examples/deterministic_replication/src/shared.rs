@@ -65,6 +65,12 @@ impl Plugin for SharedPlugin {
                 .disable::<IslandSleepingPlugin>(),
         )
         .insert_resource(Gravity(Vec2::ZERO))
+        // State-based catch-up transfers body state, not cached contact points or impulses.
+        // Rebuild contacts on every peer, including clients joining an ongoing collision.
+        .insert_resource(NarrowPhaseConfig {
+            recycle_distance: 0.0,
+            ..default()
+        })
         .insert_resource(SolverConfig {
             warm_start_coefficient: 0.0,
             ..default()
