@@ -50,7 +50,7 @@ version = "0.30.0"
 authors = ["Charles Bournhonesque <charlesbour@gmail.com>"]
 publish = false
 edition = "2024"
-rust-version = "1.95"
+rust-version = "1.97.1"
 license = "MIT OR Apache-2.0"
 
 # Enable max optimizations for dependencies, but not for our code:
@@ -204,6 +204,7 @@ bevy = { version = "0.20", default-features = false, features = [
   "serialize",
   "bevy_asset",
   "bevy_color",
+  "bevy_curve",
   "multi_threaded",
   "sysinfo_plugin",
   "zstd_rust",
@@ -226,6 +227,7 @@ bevy_text = { version = "0.20", default-features = false }
 bevy_time = { version = "0.20", default-features = false }
 bevy_transform = { version = "0.20", default-features = false }
 bevy_ui = { version = "0.20", default-features = false }
+bevy_ui_widgets = { version = "0.20", default-features = false }
 bevy_utils = { version = "0.20", default-features = false, features = [
   "debug",
 ] }
@@ -240,7 +242,7 @@ leafwing-input-manager = { git = "https://github.com/andriyDev/leafwing-input-ma
   "keyboard",
 ] }
 # replication
-bevy_replicon = { git = "https://github.com/simgine/bevy_replicon.git", branch = "bevy-0.20", version = "0.44", default-features = false, features = [
+bevy_replicon = { version = "0.45", default-features = false, features = [
   "client",
   "server",
 ] }
@@ -260,12 +262,12 @@ bevy-inspector-egui = { git = "https://github.com/taboky-dev/bevy-inspector-egui
   "bevy_render",
   "egui_open_url",
 ] }
-bevy_egui = { version = "0.43.0-rc.1", default-features = false, features = [
+bevy_egui = { version = "0.43.1", default-features = false, features = [
   "open_url",
   "default_fonts",
   "render",
 ] }
-egui_extras = "0.34"
+egui_extras = "0.36"
 
 # WASM things
 console_error_panic_hook = "0.1.7"
@@ -292,3 +294,7 @@ module_inception = "allow"
 alloc_instead_of_core = "warn"
 std_instead_of_alloc = "warn"
 std_instead_of_core = "warn"
+
+# Keep the inspector fork on the same released egui integration as the examples.
+[patch."https://github.com/taboky-dev/bevy_egui.git"]
+bevy_egui = { version = "0.43.1" }

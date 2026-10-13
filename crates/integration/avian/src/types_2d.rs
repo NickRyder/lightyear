@@ -242,7 +242,7 @@ pub mod transform {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use avian2d::math::Vector;
+    use avian2d::math::RVector;
     use bevy_math::Quat;
 
     fn state(
@@ -253,7 +253,7 @@ mod tests {
         (
             transform,
             AngularVelocity(Real::from(angular_velocity)),
-            LinearVelocity(Vector::new(
+            LinearVelocity(RVector::new(
                 Real::from(linear_velocity.0),
                 Real::from(linear_velocity.1),
             )),
@@ -267,9 +267,9 @@ mod tests {
         angular_velocity: f32,
     ) -> (Position, Rotation, LinearVelocity, AngularVelocity) {
         (
-            Position(Vector::new(Real::from(position.0), Real::from(position.1))),
+            Position(RVector::new(Real::from(position.0), Real::from(position.1))),
             Rotation::radians(Real::from(rotation)),
-            LinearVelocity(Vector::new(
+            LinearVelocity(RVector::new(
                 Real::from(linear_velocity.0),
                 Real::from(linear_velocity.1),
             )),
@@ -374,7 +374,7 @@ mod tests {
             position_rotation::hermite(start, end, InterpolationSampleContext::new(0.5, Some(1.0)));
 
         assert_vec3_close(midpoint.0.0.f32().extend(0.0), Vec3::X * 0.5);
-        assert_vec3_close(Quaternion::from(midpoint.1).f32() * Vec3::X, -Vec3::X);
+        assert_vec3_close(Quat::from(midpoint.1).f32() * Vec3::X, -Vec3::X);
         assert_vec3_close(midpoint.2.0.f32().extend(0.0), Vec3::X * 2.0);
         #[allow(clippy::unnecessary_cast)]
         let angular_velocity = midpoint.3.0 as f32;
@@ -392,7 +392,7 @@ mod tests {
 
         assert_vec3_close(result.0.0.f32().extend(0.0), Vec3::new(2.0, 1.0, 0.0));
         assert_vec3_close(
-            Quaternion::from(result.1).f32() * Vec3::X,
+            Quat::from(result.1).f32() * Vec3::X,
             Quat::from_rotation_z(core::f32::consts::FRAC_PI_8) * Vec3::X,
         );
     }
@@ -401,8 +401,8 @@ mod tests {
     fn velocity_diff_roundtrip() {
         use lightyear_replication::diffable::Diffable;
 
-        let start = LinearVelocity(Vector::new(Real::from(1.0_f32), Real::from(-2.0_f32)));
-        let end = LinearVelocity(Vector::new(Real::from(8.0_f32), Real::from(0.5_f32)));
+        let start = LinearVelocity(RVector::new(Real::from(1.0_f32), Real::from(-2.0_f32)));
+        let end = LinearVelocity(RVector::new(Real::from(8.0_f32), Real::from(0.5_f32)));
         assert_eq!(start.diff(&start), LinearVelocity::default());
         let mut value = start.clone();
         value.apply_diff(&start.diff(&end));

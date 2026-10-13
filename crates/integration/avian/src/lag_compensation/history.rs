@@ -2,9 +2,9 @@
 //! so that they can be used for lag compensation.
 
 #[cfg(all(feature = "2d", not(feature = "3d")))]
-use avian2d::{math::Vector, prelude::*};
+use avian2d::{math::RVector, prelude::*};
 #[cfg(all(feature = "3d", not(feature = "2d")))]
-use avian3d::{math::Vector, prelude::*};
+use avian3d::{math::RVector, prelude::*};
 use bevy_app::prelude::*;
 use bevy_derive::{Deref, DerefMut};
 use bevy_ecs::prelude::*;
@@ -204,7 +204,7 @@ fn update_collider_history(
             // step 2. update the child's Position, Rotation, Collider so that the avian spatial query
             //  can use the collider's aabb envelope for broad-phase collision detection
             let (min, max) = (&*history).into_iter().fold(
-                (Vector::MAX, Vector::MIN),
+                (RVector::MAX, RVector::MIN),
                 |(min, max), (_, (_, _, aabb))| (min.min(aabb.min), max.max(aabb.max)),
             );
             let aabb_envelope = ColliderAabb::from_min_max(min, max);

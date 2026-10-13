@@ -13,7 +13,7 @@ use avian2d::dynamics::solver::xpbd::joints::{PrismaticJointSolverData, Revolute
 use avian2d::{
     collider_tree::{
         ColliderTree, ColliderTreeProxy, ColliderTreeProxyKey, ColliderTreeType, ColliderTrees,
-        MovedProxies, MovedProxyList, ProxyId,
+        MovedProxies, MovedProxyList,
     },
     collision::collider::{ColliderAabb, EnlargedAabb},
     data_structures::stable_vec::StableVec,
@@ -32,7 +32,7 @@ use avian3d::dynamics::solver::xpbd::joints::{PrismaticJointSolverData, Revolute
 use avian3d::{
     collider_tree::{
         ColliderTree, ColliderTreeProxy, ColliderTreeProxyKey, ColliderTreeType, ColliderTrees,
-        MovedProxies, MovedProxyList, ProxyId,
+        MovedProxies, MovedProxyList,
     },
     collision::collider::{ColliderAabb, EnlargedAabb},
     data_structures::stable_vec::StableVec,
@@ -400,9 +400,9 @@ fn restore_colliding_entities_from_contact_graph(
 mod tests {
     use super::*;
     #[cfg(all(feature = "2d", not(feature = "3d")))]
-    use avian2d::math::Vector;
+    use avian2d::{collider_tree::ProxyId, math::RVector};
     #[cfg(all(feature = "3d", not(feature = "2d")))]
-    use avian3d::math::Vector;
+    use avian3d::{collider_tree::ProxyId, math::RVector};
     use bevy_ecs::system::RunSystemOnce;
     use lightyear_prediction::prelude::{Predicted, PredictionRegistry};
 
@@ -470,7 +470,7 @@ mod tests {
         let proxy_id = {
             let mut trees = app.world_mut().resource_mut::<ColliderTrees>();
             let tree = &mut trees.dynamic_tree;
-            tree.workspace.insertion_stack.reserve(4_096);
+            tree.workspace.temp_flags.resize(4_096, false);
             tree.bvh.primitive_indices.push(17);
             let proxy_id = ProxyId::new(tree.proxies.push(ColliderTreeProxy {
                 collider,
@@ -496,7 +496,7 @@ mod tests {
             tree.bvh.primitive_indices.clear();
             tree.proxies.clear();
             tree.moved_proxies.clear();
-            tree.workspace.insertion_stack.reserve(8_192);
+            tree.workspace.temp_flags.resize(8_192, true);
         }
         app.world_mut().resource_mut::<MovedProxies>().clear();
 
@@ -511,8 +511,9 @@ mod tests {
             tree.proxies.get(proxy_id.index()).unwrap().collider,
             collider
         );
-        assert_eq!(tree.moved_proxies, [proxy_id]);
-        assert_eq!(tree.workspace.insertion_stack.cap(), 8_192);
+        assert_eq!(&*tree.moved_proxies, &[proxy_id]);
+        assert_eq!(tree.workspace.temp_flags.len(), 8_192);
+        assert!(tree.workspace.temp_flags[4_096..].iter().all(|flag| *flag));
         assert!(app.world().resource::<MovedProxies>().contains(proxy_key));
     }
 
@@ -652,7 +653,7 @@ mod tests {
         // Add the dynamic body to the collider.
         app.world_mut()
             .entity_mut(collider)
-            .insert((RigidBody::Dynamic, LinearVelocity(Vector::Y * 20.0)));
+            .insert((RigidBody::Dynamic, LinearVelocity(RVector::Y * 20.0)));
 
         // `collider` should now belong to the dynamic collider tree.
         assert_eq!(tree_type(&app, collider), ColliderTreeType::Dynamic);
@@ -728,7 +729,7 @@ mod tests {
         app.world_mut()
             .get_mut::<Position>(unrecordered_collider)
             .unwrap()
-            .0 += Vector::X;
+            .0 += RVector::X;
         app.update();
 
         // Both colliders should own the entries their proxy keys identify.

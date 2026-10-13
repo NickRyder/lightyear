@@ -205,7 +205,7 @@ pub fn apply_action_state_to_player_movement(
     mut forces: ForcesItem,
     tick: Tick,
 ) {
-    let rot = *forces.rotation();
+    let rot = forces.rotation();
     const THRUSTER_POWER: f32 = 32000.;
     const ROTATIONAL_SPEED: f32 = 4.0;
 

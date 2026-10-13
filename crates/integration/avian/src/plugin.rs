@@ -737,7 +737,7 @@ impl LightyearAvianPlugin {
     //                     pos.f32().extend(parent_transform.translation.z)
     //                 });
     //                 let parent_rot = parent_rot.map_or(parent_transform.rotation, |rot| {
-    //                     Quaternion::from(*rot).f32()
+    //                     Quat::from(*rot).f32()
     //                 });
     //                 let parent_scale = parent_transform.scale;
     //                 let parent_transform = Transform::from_translation(parent_pos)
@@ -750,7 +750,7 @@ impl LightyearAvianPlugin {
     //                     Transform::from_translation(
     //                         pos.f32().extend(parent_transform.translation.z),
     //                     )
-    //                     .with_rotation(Quaternion::from(*rot).f32()),
+    //                     .with_rotation(Quat::from(*rot).f32()),
     //                 )
     //                 .reparented_to(&GlobalTransform::from(parent_transform));
     //
@@ -759,7 +759,7 @@ impl LightyearAvianPlugin {
     //             }
     //         } else {
     //             transform.translation = pos.f32().extend(transform.translation.z);
-    //             transform.rotation = Quaternion::from(*rot).f32();
+    //             transform.rotation = Quat::from(*rot).f32();
     //         }
     //
     //         #[cfg(feature = "3d")]
@@ -936,6 +936,7 @@ impl LightyearAvianPlugin {
 #[cfg(test)]
 mod mode_tests {
     use super::*;
+    use bevy_math::Quat;
     use bevy_state::app::StatesPlugin;
     use bevy_transform::TransformPlugin;
     use lightyear_core::prelude::ConfirmedHistory;
@@ -1041,11 +1042,11 @@ mod mode_tests {
         // Delayed interpolation writes its sampled pose into Position/Rotation. Exercise the
         // downstream Avian sync and Bevy hierarchy propagation with an existing child collider.
         let sampled_position =
-            Position(Vector::X * Real::from(3.0_f32) + Vector::Y * Real::from(2.0_f32));
+            Position(RVector::X * Real::from(3.0_f32) + RVector::Y * Real::from(2.0_f32));
         #[cfg(all(feature = "2d", not(feature = "3d")))]
         let sampled_rotation = Rotation::radians(Real::from(0.4_f32));
         #[cfg(all(feature = "3d", not(feature = "2d")))]
-        let sampled_rotation = Rotation(Quaternion::from_rotation_z(Real::from(0.4_f32)));
+        let sampled_rotation = Rotation(Quat::from_rotation_z(Real::from(0.4_f32)));
 
         *app.world_mut().get_mut::<Position>(root).unwrap() = sampled_position;
         *app.world_mut().get_mut::<Rotation>(root).unwrap() = sampled_rotation;
@@ -1060,7 +1061,7 @@ mod mode_tests {
         let expected_root_translation = sampled_position.0.f32().extend(0.0);
         #[cfg(all(feature = "3d", not(feature = "2d")))]
         let expected_root_translation = sampled_position.0.f32();
-        let expected_root_rotation = Quaternion::from(sampled_rotation).f32();
+        let expected_root_rotation = Quat::from(sampled_rotation).f32();
         assert!(
             root_transform
                 .translation
@@ -1143,7 +1144,7 @@ mod mode_tests {
         assert!(!prediction.should_rollback(&Position::default(), &Position::default()));
         assert!(prediction.should_rollback(
             &Position::default(),
-            &Position(Vector::X * Real::from(0.02_f32))
+            &Position(RVector::X * Real::from(0.02_f32))
         ));
         #[cfg(all(feature = "2d", not(feature = "3d")))]
         {
@@ -1160,41 +1161,41 @@ mod mode_tests {
         {
             assert!(!prediction.should_rollback(
                 &Rotation::default(),
-                &Rotation(Quaternion::from_rotation_x(Real::from(0.005_f32)))
+                &Rotation(Quat::from_rotation_x(Real::from(0.005_f32)))
             ));
             assert!(prediction.should_rollback(
                 &Rotation::default(),
-                &Rotation(Quaternion::from_rotation_x(Real::from(0.02_f32)))
+                &Rotation(Quat::from_rotation_x(Real::from(0.02_f32)))
             ));
         }
         assert!(!prediction.should_rollback(
             &LinearVelocity::default(),
-            &LinearVelocity(Vector::X * Real::from(0.005_f32))
+            &LinearVelocity(RVector::X * Real::from(0.1_f32))
         ));
         assert!(prediction.should_rollback(
             &LinearVelocity::default(),
-            &LinearVelocity(Vector::X * Real::from(0.02_f32))
+            &LinearVelocity(RVector::X * Real::from(0.2_f32))
         ));
         #[cfg(all(feature = "2d", not(feature = "3d")))]
         {
             assert!(!prediction.should_rollback(
                 &AngularVelocity::default(),
-                &AngularVelocity(Real::from(0.005_f32))
+                &AngularVelocity(Real::from(0.1_f32))
             ));
             assert!(prediction.should_rollback(
                 &AngularVelocity::default(),
-                &AngularVelocity(Real::from(0.02_f32))
+                &AngularVelocity(Real::from(0.2_f32))
             ));
         }
         #[cfg(all(feature = "3d", not(feature = "2d")))]
         {
             assert!(!prediction.should_rollback(
                 &AngularVelocity::default(),
-                &AngularVelocity(Vector::X * Real::from(0.005_f32))
+                &AngularVelocity(RVector::X * Real::from(0.1_f32))
             ));
             assert!(prediction.should_rollback(
                 &AngularVelocity::default(),
-                &AngularVelocity(Vector::X * Real::from(0.02_f32))
+                &AngularVelocity(RVector::X * Real::from(0.2_f32))
             ));
         }
     }
@@ -1223,7 +1224,7 @@ mod mode_tests {
         let prediction = app.world().resource::<PredictionRegistry>();
         assert!(!prediction.should_rollback(
             &Position::default(),
-            &Position(Vector::X * Real::from(100.0_f32))
+            &Position(RVector::X * Real::from(100.0_f32))
         ));
     }
 }
@@ -1287,7 +1288,7 @@ mod tests {
             .spawn((
                 Position::default(),
                 Rotation::default(),
-                LinearVelocity(Vector::X),
+                LinearVelocity(RVector::X),
                 AngularVelocity::default(),
                 FrameInterpolate,
             ))
@@ -1501,7 +1502,7 @@ mod tests {
     #[test]
     fn child_position_tracks_local_transform_and_reparenting() {
         let mut app = App::new();
-        let body1_position = Position(Vector::new(10.0, 0.0));
+        let body1_position = Position(RVector::new(10.0, 0.0));
         let body1_rotation = Rotation::radians(core::f32::consts::FRAC_PI_2);
         let body1 = app
             .world_mut()
@@ -1512,7 +1513,7 @@ mod tests {
                 GlobalTransform::IDENTITY,
             ))
             .id();
-        let body2_position = Position(Vector::new(-5.0, 3.0));
+        let body2_position = Position(RVector::new(-5.0, 3.0));
         let body2_rotation = Rotation::radians(-0.5);
         let body2 = app
             .world_mut()
@@ -1524,9 +1525,9 @@ mod tests {
             ))
             .id();
         let local1 = ColliderTransform {
-            translation: Vector::new(2.0, 0.0),
-            rotation: Rotation::radians(0.25),
-            scale: Vector::ONE,
+            translation: RVector::new(2.0, 0.0),
+            rotation: bevy_math::Rot2::radians(0.25),
+            scale: RVector::ONE,
         };
         let child = app
             .world_mut()
@@ -1550,13 +1551,13 @@ mod tests {
         );
         assert_eq!(
             *app.world().get::<Rotation>(child).unwrap(),
-            body1_rotation * local1.rotation
+            body1_rotation * Rotation::from(local1.rotation)
         );
 
         let local2 = ColliderTransform {
-            translation: Vector::new(-1.0, 4.0),
-            rotation: Rotation::radians(-0.3),
-            scale: Vector::ONE,
+            translation: RVector::new(-1.0, 4.0),
+            rotation: bevy_math::Rot2::radians(-0.3),
+            scale: RVector::ONE,
         };
         app.world_mut()
             .entity_mut(child)
@@ -1572,7 +1573,7 @@ mod tests {
         );
         assert_eq!(
             *app.world().get::<Rotation>(child).unwrap(),
-            body2_rotation * local2.rotation
+            body2_rotation * Rotation::from(local2.rotation)
         );
     }
 }
@@ -1628,7 +1629,7 @@ mod tests_3d {
             "Position mode must keep physics authoritative without relying on frame restore"
         );
 
-        let canonical_position = Position::new(Vector::new(10.0, 20.0, 30.0));
+        let canonical_position = Position::new(RVector::new(10.0, 20.0, 30.0));
         let entity = app
             .world_mut()
             .spawn((
@@ -1691,7 +1692,7 @@ mod tests_3d {
         // frame interpolation rather than from the component's spawn tick.
         app.world_mut().run_schedule(PostUpdate);
 
-        let visual_position = Position::new(Vector::new(4.0, 6.0, 8.0));
+        let visual_position = Position::new(RVector::new(4.0, 6.0, 8.0));
         app.world_mut()
             .entity_mut(entity)
             .get_mut::<FrameInterpolationHistory<Position>>()
@@ -1734,7 +1735,7 @@ mod tests_3d {
                 .transform_to_position
         );
 
-        let canonical_position = Position::new(Vector::new(10.0, 20.0, 30.0));
+        let canonical_position = Position::new(RVector::new(10.0, 20.0, 30.0));
         let entity = app
             .world_mut()
             .spawn((
@@ -1761,7 +1762,7 @@ mod tests_3d {
         app.world_mut().run_schedule(PostUpdate);
         assert_eq!(
             app.world().get::<Position>(entity),
-            Some(&Position::new(Vector::new(5.0, 10.0, 15.0)))
+            Some(&Position::new(RVector::new(5.0, 10.0, 15.0)))
         );
 
         app.world_mut().run_schedule(RunFixedMainLoop);
@@ -1774,7 +1775,7 @@ mod tests_3d {
             canonical_position.f32()
         );
 
-        let authored_position = Position::new(Vector::new(30.0, 40.0, 50.0));
+        let authored_position = Position::new(RVector::new(30.0, 40.0, 50.0));
         app.world_mut()
             .entity_mut(entity)
             .get_mut::<Transform>()

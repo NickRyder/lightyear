@@ -44,7 +44,7 @@
 
 use crate::config::InputConfig;
 use crate::input_buffer::InputBuffer;
-#[cfg(feature = "prediction")]
+#[cfg(any(feature = "prediction", test))]
 use crate::input_message::resolve_prespawned_target;
 use crate::input_message::{
     ActionStateQueryData, ActionStateSequence, InputMessage, InputTarget, PerTargetData, StateMut,

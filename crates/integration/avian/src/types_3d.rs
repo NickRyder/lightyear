@@ -211,7 +211,7 @@ pub mod transform {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use avian3d::math::Vector;
+    use avian3d::math::RVector;
     use bevy_math::{Quat, Vec3};
 
     fn state(
@@ -221,12 +221,12 @@ mod tests {
     ) -> (Transform, AngularVelocity, LinearVelocity) {
         (
             transform,
-            AngularVelocity(Vector::new(
+            AngularVelocity(RVector::new(
                 Real::from(angular_velocity.x),
                 Real::from(angular_velocity.y),
                 Real::from(angular_velocity.z),
             )),
-            LinearVelocity(Vector::new(
+            LinearVelocity(RVector::new(
                 Real::from(linear_velocity.x),
                 Real::from(linear_velocity.y),
                 Real::from(linear_velocity.z),
@@ -241,18 +241,18 @@ mod tests {
         angular_velocity: Vec3,
     ) -> (Position, Rotation, LinearVelocity, AngularVelocity) {
         (
-            Position(Vector::new(
+            Position(RVector::new(
                 Real::from(position.x),
                 Real::from(position.y),
                 Real::from(position.z),
             )),
             Rotation::from(rotation),
-            LinearVelocity(Vector::new(
+            LinearVelocity(RVector::new(
                 Real::from(linear_velocity.x),
                 Real::from(linear_velocity.y),
                 Real::from(linear_velocity.z),
             )),
-            AngularVelocity(Vector::new(
+            AngularVelocity(RVector::new(
                 Real::from(angular_velocity.x),
                 Real::from(angular_velocity.y),
                 Real::from(angular_velocity.z),
@@ -401,12 +401,12 @@ mod tests {
     fn velocity_diff_roundtrip() {
         use lightyear_replication::diffable::Diffable;
 
-        let start = LinearVelocity(Vector::new(
+        let start = LinearVelocity(RVector::new(
             Real::from(1.0_f32),
             Real::from(-2.0_f32),
             Real::from(4.0_f32),
         ));
-        let end = LinearVelocity(Vector::new(
+        let end = LinearVelocity(RVector::new(
             Real::from(8.0_f32),
             Real::from(0.5_f32),
             Real::from(-1.0_f32),
@@ -416,12 +416,12 @@ mod tests {
         value.apply_diff(&start.diff(&end));
         assert_eq!(value, end);
 
-        let start = AngularVelocity(Vector::new(
+        let start = AngularVelocity(RVector::new(
             Real::from(0.5_f32),
             Real::from(-1.0_f32),
             Real::from(2.0_f32),
         ));
-        let end = AngularVelocity(Vector::new(
+        let end = AngularVelocity(RVector::new(
             Real::from(-4.0_f32),
             Real::from(8.0_f32),
             Real::from(0.25_f32),
