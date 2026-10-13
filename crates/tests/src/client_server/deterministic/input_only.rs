@@ -195,9 +195,14 @@ fn configure_stepper(stepper: &mut DetStepper, warmup_ticks: u32) {
     // InputOnly mode on every peer — never send CatchUpRequest, never
     // wait for an accepted catch-up snapshot.
     stepper.server_app.insert_resource(CatchUpMode::InputOnly);
+    // Keep Avian's default contact recycling to exercise cached-contact rollback in this mode.
+    stepper
+        .server_app
+        .insert_resource(NarrowPhaseConfig::default());
     add_phase_samplers(&mut stepper.server_app, "server");
     for (i, client_app) in stepper.client_apps.iter_mut().enumerate() {
         client_app.insert_resource(CatchUpMode::InputOnly);
+        client_app.insert_resource(NarrowPhaseConfig::default());
         client_app.insert_resource(RandomDrive::new(i as u64 + 1, warmup_ticks));
         client_app.add_systems(FixedPreUpdate, drive_random_input);
         // Mark every replicated `DetPlayerId` entity as

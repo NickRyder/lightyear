@@ -45,6 +45,10 @@ use serde::de::DeserializeOwned;
 /// app.register_input_action::<Movement>();
 /// ```
 ///
+/// The app must also install Bevy's `bevy::input::InputPlugin`, which initializes the
+/// resources read by BEI. `DefaultPlugins` includes it; apps using `MinimalPlugins`
+/// must add it explicitly, including headless apps that share this input protocol.
+///
 /// # Action entities
 ///
 /// BEI uses separate "action entities" with [`ActionOf<C>`] to represent
