@@ -30,7 +30,7 @@ pub struct LagCompensationSample {
     pub interpolation_tick: Tick,
     /// The interpolation fraction between `interpolation_tick` and the next
     /// history tick.
-    pub interpolation_overstep: Real,
+    pub interpolation_overstep: f32,
     /// The collider position used by the narrow-phase query.
     pub position: Position,
     /// The collider rotation used by the narrow-phase query.
@@ -52,7 +52,7 @@ pub struct LagCompensationRayHit {
     pub interpolation_tick: Tick,
     /// The interpolation fraction between `interpolation_tick` and the next
     /// history tick.
-    pub interpolation_overstep: Real,
+    pub interpolation_overstep: f32,
     /// The collider position used by the narrow-phase query.
     pub position: Position,
     /// The collider rotation used by the narrow-phase query.
@@ -103,7 +103,7 @@ impl LagCompensationSpatialQuery<'_, '_> {
         interpolation_delay: InterpolationDelay,
         origin: RVector,
         direction: Dir,
-        max_distance: Real,
+        max_distance: f32,
         solid: bool,
         filter: &mut SpatialQueryFilter,
     ) -> Option<RayHitData> {
@@ -125,7 +125,7 @@ impl LagCompensationSpatialQuery<'_, '_> {
         interpolation_delay: InterpolationDelay,
         origin: RVector,
         direction: Dir,
-        max_distance: Real,
+        max_distance: f32,
         solid: bool,
         filter: &mut SpatialQueryFilter,
     ) -> Option<LagCompensationRayHit> {
@@ -148,7 +148,7 @@ impl LagCompensationSpatialQuery<'_, '_> {
         interpolation_delay: InterpolationDelay,
         origin: RVector,
         direction: Dir,
-        max_distance: Real,
+        max_distance: f32,
         solid: bool,
         predicate: &dyn Fn(Entity) -> bool,
         filter: &mut SpatialQueryFilter,
@@ -173,7 +173,7 @@ impl LagCompensationSpatialQuery<'_, '_> {
         interpolation_delay: InterpolationDelay,
         origin: RVector,
         direction: Dir,
-        max_distance: Real,
+        max_distance: f32,
         solid: bool,
         predicate: &dyn Fn(Entity) -> bool,
         filter: &mut SpatialQueryFilter,
@@ -214,9 +214,9 @@ impl LagCompensationSpatialQuery<'_, '_> {
                 };
 
                 #[cfg(all(feature = "2d", not(feature = "3d")))]
-                let dir = direction.as_vec2().real();
+                let dir = direction.as_vec2();
                 #[cfg(all(feature = "3d", not(feature = "2d")))]
-                let dir = direction.as_vec3().real();
+                let dir = direction.as_vec3();
 
                 if let Some((distance, normal)) = collider.cast_ray(
                     sample.position.0,
@@ -296,10 +296,9 @@ fn sample_history(
         }
         return None;
     };
-    let interpolation_overstep = Real::from(interpolation_overstep);
 
     // The collider shape is assumed to be stable; only its pose is sampled.
-    let position = start_position.lerp(**target_position, interpolation_overstep);
+    let position = start_position.lerp(**target_position, Real::from(interpolation_overstep));
     let rotation = start_rotation.slerp(*target_rotation, interpolation_overstep);
     Some(LagCompensationSample {
         interpolation_tick,
