@@ -12,7 +12,6 @@ use bevy_ecs::system::{
 use bevy_ecs::world::unsafe_world_cell::UnsafeWorldCell;
 use lightyear_prediction::prelude::PredictionRegistry;
 use lightyear_prediction::registry::PopUntilTickAndHashFn;
-use lightyear_prediction::rollback::DisableRollback;
 use lightyear_replication::prelude::ComponentRegistry;
 use lightyear_replication::registry::deterministic::DeterministicFns;
 use tracing::trace;
@@ -48,7 +47,6 @@ impl<'w, const HISTORY: bool> ChecksumWorld<'w, '_, HISTORY> {
             archetypes.generation(),
         );
         let marker_id = self.state.marker_id;
-        let _ = self.state.disable_rollback_id;
 
         for archetype in &archetypes[old_generation..] {
             if !archetype.contains(marker_id) {
@@ -105,7 +103,6 @@ unsafe impl<const HISTORY: bool> SystemParam for ChecksumWorld<'_, '_, HISTORY> 
 
     fn init_state(world: &mut World) -> Self::State {
         let marker_id = world.register_component::<Deterministic>();
-        let disable_rollback_id = world.register_component::<DisableRollback>();
         let registry = world.resource::<ComponentRegistry>();
         let hash_fns = if !HISTORY {
             let registry = world.resource::<ComponentRegistry>();
@@ -137,7 +134,6 @@ unsafe impl<const HISTORY: bool> SystemParam for ChecksumWorld<'_, '_, HISTORY> 
         trace!("HashFns used for ChecksumState: {:?}", hash_fns);
         ChecksumState {
             marker_id,
-            disable_rollback_id,
             archetypes: Default::default(),
             hash_fns,
             archetype_generation: ArchetypeGeneration::initial(),
@@ -146,16 +142,14 @@ unsafe impl<const HISTORY: bool> SystemParam for ChecksumWorld<'_, '_, HISTORY> 
 
     fn init_access(
         state: &Self::State,
-        system_meta: &mut SystemMeta,
+        _system_meta: &mut SystemMeta,
         system_access: &mut SystemAccess,
-        world: &mut World,
+        _world: &mut World,
     ) {
         let mut filtered_access = FilteredAccess::default();
-        filtered_access.add_read(state.marker_id);
-        // Exclude entities with DisableRollback from the checksum calculation since they won't have a PredictionHistory?
-        if HISTORY {
-            filtered_access.and_without(state.disable_rollback_id);
-        }
+        filtered_access.and_with(state.marker_id);
+        // Hashed components are optional per archetype. Requiring them all would hide
+        // conflicts on entities carrying only a subset, including DisableRollback entities.
         state
             .hash_fns
             .iter()
@@ -163,13 +157,12 @@ unsafe impl<const HISTORY: bool> SystemParam for ChecksumWorld<'_, '_, HISTORY> 
                 if pop_fn.is_some() {
                     // the component is a PredictionHistory
                     // TODO: for non-full components, just fetch the component value directly
-                    // We need write access because we will call `pop_until_tick` on the history component
-                    filtered_access.add_write(*component_id);
+                    // The type-erased history hash function takes an exclusive component borrow.
+                    filtered_access.access_mut().add_write(*component_id);
                 } else {
-                    filtered_access.add_read(*component_id);
+                    filtered_access.access_mut().add_read(*component_id);
                 }
             });
-        // SAFETY: used only to extend access.
         system_access.try_add(filtered_access).unwrap();
     }
 
@@ -183,16 +176,12 @@ unsafe impl<const HISTORY: bool> SystemParam for ChecksumWorld<'_, '_, HISTORY> 
     }
 }
 
-unsafe impl<const HISTORY: bool> ReadOnlySystemParam for ChecksumWorld<'_, '_, HISTORY> {}
+// SAFETY: Current-state checksums only read components; history checksums borrow histories mutably.
+unsafe impl ReadOnlySystemParam for ChecksumWorld<'_, '_, false> {}
 
 pub(crate) struct ChecksumState {
     /// ComponentId for the `Deterministic` marker component.
     pub(crate) marker_id: ComponentId,
-    /// ComponentId for the `DisableRollback` marker component.
-    ///
-    /// We will not compute the checksum for entities that have this component, as it could mess up the rollback logic
-    /// since we are removing elements from the history.
-    pub(crate) disable_rollback_id: ComponentId,
     pub(crate) archetypes: Vec<ChecksumArchetype>,
     pub(crate) hash_fns: BTreeMap<ComponentId, (DeterministicFns, Option<PopUntilTickAndHashFn>)>,
     pub(crate) archetype_generation: ArchetypeGeneration,
@@ -211,5 +200,47 @@ impl ChecksumArchetype {
             id,
             components: Default::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ChecksumWorld;
+    use bevy_app::App;
+    use bevy_ecs::prelude::{Component, Query, With, Without};
+    use bevy_ecs::system::SystemState;
+    use lightyear_prediction::prelude::{
+        DisableRollback, PredictionAppRegistrationExt, PredictionHistory, PredictionRegistry,
+    };
+    use lightyear_replication::prelude::AppComponentExt;
+
+    #[derive(Component, Clone, Debug, Hash, PartialEq)]
+    struct HashedComponent(u32);
+
+    #[derive(Component, Clone, Debug, Hash, PartialEq)]
+    struct OtherHashedComponent(u32);
+
+    #[test]
+    #[should_panic(expected = "error[B0001]")]
+    fn history_checksum_rejects_conflicting_query_on_disabled_partial_entity() {
+        let mut app = App::new();
+        app.init_resource::<PredictionRegistry>();
+        app.component::<HashedComponent>().add_default_hash();
+        app.local_rollback::<HashedComponent>();
+        app.component::<OtherHashedComponent>().add_default_hash();
+        app.local_rollback::<OtherHashedComponent>();
+
+        // Histories are accessed even with DisableRollback and without other hashed
+        // components. Reject aliasing at initialization, before fetching either parameter.
+        SystemState::<(
+            ChecksumWorld<true>,
+            Query<
+                &mut PredictionHistory<HashedComponent>,
+                (
+                    With<DisableRollback>,
+                    Without<PredictionHistory<OtherHashedComponent>>,
+                ),
+            >,
+        )>::new(app.world_mut());
     }
 }
