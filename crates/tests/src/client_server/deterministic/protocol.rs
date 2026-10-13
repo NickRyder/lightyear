@@ -165,6 +165,12 @@ impl Plugin for DetProtocolPlugin {
         }
         app.add_plugins(physics_plugins);
         app.insert_resource(Gravity(Vec2::ZERO));
+        // State-based catch-up transfers body state, not cached contact points. Rebuild contacts
+        // on every peer so a late joiner does not diverge from the server's recycled manifolds.
+        app.insert_resource(NarrowPhaseConfig {
+            recycle_distance: 0.0,
+            ..default()
+        });
 
         // Keep frame interpolation in shared code so rendered and headless clients use the same
         // frame-history and correction pipeline. Position mode itself no longer depends on this
