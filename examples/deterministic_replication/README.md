@@ -6,10 +6,11 @@
 - Every physical child is explicitly enrolled in deterministic rollback so its derived collider state is restored
   during replay.
 - State-based catch-up transfers body poses and velocities, but does not transfer Avian's contact caches.
-  The shared physics setup disables contact recycling (`NarrowPhaseConfig::recycle_distance = 0.0`)
-  and solver warm starting so every peer rebuilds contacts from the restored body state. Keep these
-  settings consistent on the server and clients; contact recycling was added in Avian 0.8 and can
-  otherwise make a late joiner diverge during an ongoing collision.
+  In this mode, the shared physics setup disables contact recycling
+  (`NarrowPhaseConfig::recycle_distance = 0.0`) so every peer rebuilds contacts from body state.
+  Keep this setting consistent on the server and clients; contact recycling was added in Avian 0.8
+  and can otherwise make a late joiner diverge during an ongoing collision. Input-only mode retains
+  Avian's default recycling. Solver warm starting is disabled in both modes.
 
 
 
