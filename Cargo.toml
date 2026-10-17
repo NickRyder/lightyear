@@ -242,7 +242,9 @@ leafwing-input-manager = { git = "https://github.com/andriyDev/leafwing-input-ma
   "keyboard",
 ] }
 # replication
-bevy_replicon = { git = "https://github.com/simgine/bevy_replicon.git", branch = "bevy-0.20", version = "0.44", default-features = false, features = [
+# The former bevy-0.20 branch was deleted after merging. Keep its Git source and
+# 0.44 version requirement so consumers can retain their existing source patches.
+bevy_replicon = { git = "https://github.com/simgine/bevy_replicon.git", rev = "2b4cbb8e79ee5f1353ed85e92a7ef87bb56fee66", version = "0.44", default-features = false, features = [
   "client",
   "server",
 ] }
