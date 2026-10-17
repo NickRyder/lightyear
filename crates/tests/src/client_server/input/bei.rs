@@ -901,6 +901,10 @@ fn test_input_broadcasting_prediction() {
         .spawn((
             Replicate::to_clients(NetworkTarget::All),
             PredictionTarget::to_clients(NetworkTarget::All),
+            ControlledBy {
+                owner: stepper.client_of_entities[0],
+                lifetime: Default::default(),
+            },
             BEIContext,
         ))
         .id();

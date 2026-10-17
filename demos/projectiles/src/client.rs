@@ -138,13 +138,12 @@ fn clear_projectiles_on_reset(
 /// ready. This covers the ordering where the action arrives after its player.
 fn configure_player_action_on_insert(
     trigger: On<
-        Insert,
-        (
+        Insert<(
             ActionOf<PlayerContext>,
             Action<MovePlayer>,
             Action<MoveCursor>,
             Action<Shoot>,
-        ),
+        )>,
     >,
     action_of: Query<&ActionOf<PlayerContext>>,
     controlled_players: Query<(), (With<PlayerMarker>, With<Controlled>)>,
@@ -351,15 +350,14 @@ fn configure_player_action(
 #[allow(clippy::type_complexity)]
 fn configure_global_action_on_insert(
     trigger: On<
-        Insert,
-        (
+        Insert<(
             ClientContext,
             ActionOf<ClientContext>,
             Action<CycleTrajectory>,
             Action<CycleRepresentation>,
             Action<CycleHitPolicy>,
             Action<CycleTimeline>,
-        ),
+        )>,
     >,
     contexts: Query<&Actions<ClientContext>, With<ClientContext>>,
     trajectory: Query<
