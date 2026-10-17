@@ -24,12 +24,16 @@ pub(crate) struct PhysicsBundle {
 }
 
 impl PhysicsBundle {
-    pub(crate) fn bullet() -> Self {
-        Self {
-            collider: Collider::circle(BULLET_SIZE),
-            collider_density: ColliderDensity(BULLET_DENSITY),
-            rigid_body: RigidBody::Dynamic,
-        }
+    pub(crate) fn bullet() -> impl Bundle {
+        (
+            Self {
+                collider: Collider::circle(BULLET_SIZE),
+                collider_density: ColliderDensity(BULLET_DENSITY),
+                rigid_body: RigidBody::Dynamic,
+            },
+            // Fast bullets must detect moving targets between fixed ticks.
+            SpeculativeCcd::MAX,
+        )
     }
 
     pub(crate) fn player_ship() -> Self {

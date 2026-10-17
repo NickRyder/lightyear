@@ -805,6 +805,64 @@ mod tests {
     use super::*;
     use lightyear::input::leafwing::prelude::LeafwingSnapshot;
 
+    #[test]
+    fn opposing_bullets_collide_at_weapon_speed() {
+        use bevy::ecs::system::RunSystemOnce;
+        use bevy::time::TimeUpdateStrategy;
+
+        let mut app = App::new();
+        app.add_plugins((
+            MinimalPlugins,
+            TransformPlugin,
+            PhysicsPlugins::default()
+                .build()
+                .disable::<PhysicsTransformPlugin>()
+                .disable::<PhysicsInterpolationPlugin>()
+                .disable::<IslandPlugin>()
+                .disable::<IslandSleepingPlugin>(),
+        ));
+        let dt = Duration::from_secs_f64(1.0 / FIXED_TIMESTEP_HZ);
+        app.insert_resource(TimeUpdateStrategy::ManualDuration(dt));
+        app.insert_resource(Time::<Fixed>::from_duration(dt));
+        app.insert_resource(Gravity(Vec2::ZERO));
+        app.finish();
+        app.cleanup();
+
+        let bullets = [-12.0, 12.0].map(|x| {
+            app.world_mut()
+                .spawn((
+                    PhysicsBundle::bullet(),
+                    Transform::from_xyz(x, 0.0, 0.0),
+                    Position(Vec2::new(x, 0.0)),
+                    Rotation::default(),
+                    LinearVelocity::ZERO,
+                ))
+                .id()
+        });
+        // Initialize collider state before starting the approach.
+        for _ in 0..3 {
+            app.update();
+        }
+        let speed = Weapon::new(12).bullet_speed;
+        for (bullet, velocity) in bullets.into_iter().zip([speed, -speed]) {
+            app.world_mut().get_mut::<LinearVelocity>(bullet).unwrap().0 = Vec2::X * velocity;
+        }
+        let mut saw_contact = false;
+        for _ in 0..3 {
+            app.update();
+            saw_contact |= app
+                .world_mut()
+                .run_system_once(|collisions: Collisions| collisions.iter().next().is_some())
+                .unwrap();
+        }
+        assert!(saw_contact, "opposing bullets should register a hit");
+        assert!(
+            app.world().get::<Position>(bullets[0]).unwrap().x
+                < app.world().get::<Position>(bullets[1]).unwrap().x,
+            "bullets should collide instead of passing through each other"
+        );
+    }
+
     fn action_state<const N: usize>(pressed: [PlayerActions; N]) -> ActionState<PlayerActions> {
         let mut action_state = ActionState::default();
         for action in pressed {
