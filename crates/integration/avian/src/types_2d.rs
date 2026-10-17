@@ -404,14 +404,14 @@ mod tests {
         let start = LinearVelocity(RVector::new(Real::from(1.0_f32), Real::from(-2.0_f32)));
         let end = LinearVelocity(RVector::new(Real::from(8.0_f32), Real::from(0.5_f32)));
         assert_eq!(start.diff(&start), LinearVelocity::default());
-        let mut value = start.clone();
+        let mut value = start;
         value.apply_diff(&start.diff(&end));
         assert_eq!(value, end);
 
         let start = AngularVelocity(Real::from(0.5_f32));
         let end = AngularVelocity(Real::from(-4.0_f32));
         assert_eq!(start.diff(&start), AngularVelocity::default());
-        let mut value = start.clone();
+        let mut value = start;
         value.apply_diff(&start.diff(&end));
         assert_eq!(value, end);
     }

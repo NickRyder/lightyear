@@ -412,7 +412,7 @@ mod tests {
             Real::from(-1.0_f32),
         ));
         assert_eq!(start.diff(&start), LinearVelocity::default());
-        let mut value = start.clone();
+        let mut value = start;
         value.apply_diff(&start.diff(&end));
         assert_eq!(value, end);
 
@@ -427,7 +427,7 @@ mod tests {
             Real::from(0.25_f32),
         ));
         assert_eq!(start.diff(&start), AngularVelocity::default());
-        let mut value = start.clone();
+        let mut value = start;
         value.apply_diff(&start.diff(&end));
         assert_eq!(value, end);
     }
