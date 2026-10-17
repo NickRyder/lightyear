@@ -400,7 +400,7 @@ fn assert_island_stress_balls_are_finite(world: &mut World) {
         count += 1;
     }
     assert!(
-        count >= ISLAND_STRESS_BALL_COUNT + 1,
+        count > ISLAND_STRESS_BALL_COUNT,
         "expected default ball plus {ISLAND_STRESS_BALL_COUNT} stress balls, found {count}"
     );
 }

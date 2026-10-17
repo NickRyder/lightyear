@@ -123,19 +123,10 @@ impl DetBallBodyBundle {
 /// frame-interpolation on Position/Rotation (required to preserve
 /// post-rollback state under
 /// `AvianReplicationMode::Position { sync_to_transform: false }`).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct DetProtocolPlugin {
     pub enable_islands: bool,
     pub compound_ball: bool,
-}
-
-impl Default for DetProtocolPlugin {
-    fn default() -> Self {
-        Self {
-            enable_islands: false,
-            compound_ball: false,
-        }
-    }
 }
 
 impl Plugin for DetProtocolPlugin {
